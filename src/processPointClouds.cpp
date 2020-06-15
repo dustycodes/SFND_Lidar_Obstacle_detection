@@ -103,6 +103,32 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
 
     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
+    // Creating the KdTree object for the search method of the extraction
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+
+    std::vector<pcl::PointIndices> clusterIndices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(clusterTolerance); // 2cm
+    ec.setMinClusterSize(minSize);
+    ec.setMaxClusterSize(maxSize);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud (cloud);
+    ec.extract(clusterIndices);
+
+    for (const auto& clusterIndex : clusterIndices)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr clusterCloud(new pcl::PointCloud<pcl::PointXYZ>);
+        for (auto pit = clusterIndex.indices.begin(); pit != clusterIndex.indices.end(); ++pit)
+        {
+            clusterCloud->points.push_back(cloud->points[*pit]);
+        }
+        clusterCloud->width = clusterCloud->points.size();
+        clusterCloud->height = 1;
+        clusterCloud->is_dense = true;
+
+        clusters.push_back(clusterCloud);
+    }
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
