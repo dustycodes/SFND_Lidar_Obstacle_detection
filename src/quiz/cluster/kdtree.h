@@ -25,17 +25,37 @@ struct KdTree
 	: root(NULL)
 	{}
 
-	void insert(std::vector<float> point, int id)
-	{
-		// TODO: Fill in this function to insert a new point into the tree
-		// the function should create a new node and place correctly with in the root 
+	void insertRec(const std::vector<float>& point, const int& id, const uint& currentDepth, Node** currentNode)
+    {
+        if (*currentNode == NULL)
+        {
+            *currentNode = new Node(point, id);
+            return;
+        }
 
-	}
+        uint side = currentDepth % 2;
+	    if (point[side] < (*currentNode)->point[side])
+        {
+	        insertRec(point, id, currentDepth + 1, &(*currentNode)->left);
+        }
+	    else
+        {
+            insertRec(point, id, currentDepth + 1, &(*currentNode)->right);
+        }
+    }
+
+    void insert(std::vector<float> point, int id)
+    {
+        insertRec(point, id, 0, &root);
+    }
 
 	// return a list of point ids in the tree that are within distance of target
 	std::vector<int> search(std::vector<float> target, float distanceTol)
 	{
 		std::vector<int> ids;
+
+		
+
 		return ids;
 	}
 	
