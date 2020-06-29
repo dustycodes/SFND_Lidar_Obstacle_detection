@@ -75,15 +75,49 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 
 }
 
+//Proximity(point,cluster):
+//mark point as processed
+//add point to cluster
+//nearby points = tree(point)
+//Iterate through each nearby point
+//        If point has not been processed
+//Proximity(cluster)
+void proximity(const std::vector<float>& point, const KdTree* tree, const float& distanceTol, std::vector<bool>& processed, std::vector<int>& cluster)
+{
+
+}
+
 std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
 {
 
 	// TODO: Fill out this function to return list of indices for each cluster
+    //    list of clusters
+    std::vector<std::vector<int>> clusters;
+    // Keep track of processed points
+    std::vector<bool> processed(points.size(), false);
 
-	std::vector<std::vector<int>> clusters;
+
+//    Iterate through each point
+    int i = 0;
+    for (auto& point : points)
+    {
+        // If point has not been processed
+        if (processed[i])
+        {
+            ++i;
+            continue;
+        }
+
+        // Create cluster
+        std::vector<int> cluster;
+        proximity(point, processed, cluster);
+
+        clusters.push_back(cluster);
+        ++i;
+    }
+
  
 	return clusters;
-
 }
 
 int main ()
