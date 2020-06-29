@@ -7,6 +7,9 @@
 #include <string>
 #include "kdtree.h"
 
+void proximity(int index, const std::vector<std::vector<float>>& points, KdTree *tree, float distanceTol,
+               std::vector<bool>& processedPoints, std::vector<int>& cluster);
+
 // Arguments:
 // window is the region to draw box around
 // increase zoom to see more of the area
@@ -82,10 +85,7 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 //Iterate through each nearby point
 //        If point has not been processed
 //Proximity(cluster)
-void proximity(const std::vector<float>& point, const KdTree* tree, const float& distanceTol, std::vector<bool>& processed, std::vector<int>& cluster)
-{
 
-}
 
 std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
 {
@@ -96,28 +96,41 @@ std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<flo
     // Keep track of processed points
     std::vector<bool> processed(points.size(), false);
 
-
-//    Iterate through each point
+    // Iterate through each point
     int i = 0;
-    for (auto& point : points)
+    for (int i = 0; i < points.size(); ++i)
     {
         // If point has not been processed
         if (processed[i])
         {
-            ++i;
             continue;
         }
 
         // Create cluster
         std::vector<int> cluster;
-        proximity(point, processed, cluster);
+        proximity(i, points, tree, distanceTol, processed, cluster);
 
         clusters.push_back(cluster);
-        ++i;
     }
 
- 
 	return clusters;
+}
+
+void proximity(int index, const std::vector<std::vector<float>>& points, KdTree *tree, float distanceTol,
+               std::vector<bool>& processed, std::vector<int>& cluster)
+{
+    processed[index] = true;
+    cluster.push_back(index);
+
+    auto nn = tree->search(points[index], distanceTol);
+
+    for(int id : nn)
+    {
+        if (not processed[id])
+        {
+            proximity(id, points, tree, distanceTol, processed, cluster);
+        }
+    }
 }
 
 int main ()

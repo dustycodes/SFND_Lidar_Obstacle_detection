@@ -137,6 +137,25 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
     return clusters;
 }
 
+template<typename PointT>
+BoxQ ProcessPointClouds<PointT>::BoundingBoxQ(typename pcl::PointCloud<PointT>::Ptr cluster)
+{
+
+    // Find bounding box for one of the clusters
+    PointT minPoint, maxPoint;
+    // TODO do PCA to get a fit boudning box on cluster
+//    pcl::getMinMax3D(*cluster, minPoint, maxPoint);
+//
+    BoxQ box;
+//    box.x_min = minPoint.x;
+//    box.y_min = minPoint.y;
+//    box.z_min = minPoint.z;
+//    box.x_max = maxPoint.x;
+//    box.y_max = maxPoint.y;
+//    box.z_max = maxPoint.z;
+
+    return box;
+}
 
 template<typename PointT>
 Box ProcessPointClouds<PointT>::BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster)

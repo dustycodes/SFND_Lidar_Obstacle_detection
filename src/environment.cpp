@@ -70,8 +70,22 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
         std::cout << "cluster size ";
         pointProcessor->numPoints(cluster);
         renderPointCloud(viewer,cluster,"obstCloud"+std::to_string(clusterId),colors[clusterId]);
+
+        // Bounding Box
+        Box box = pointProcessor->BoundingBox(cluster);
+//        BoxQ boxQ = pointProcessor->BoundingBoxQ(cluster);
+        renderBox(viewer, box, clusterId);
+
         ++clusterId;
     }
+}
+
+void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
+{
+    ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
+    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd(
+            "/home/dusty/Work/DustyCodes/SFND_Lidar_Obstacle_detection/src/sensors/data/pcd/data_1/0000000000.pcd");
+    renderPointCloud(viewer,inputCloud,"inputCloud");
 }
 
 
@@ -106,7 +120,8 @@ int main (int argc, char** argv)
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    simpleHighway(viewer);
+//    simpleHighway(viewer);
+    cityBlock(viewer);
 
     while (!viewer->wasStopped ())
     {
