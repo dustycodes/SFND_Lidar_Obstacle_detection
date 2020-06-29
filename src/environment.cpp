@@ -82,10 +82,39 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 
 void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
+    std::string baseDir = "/home/dusty/Work/DustyCodes/SFND_Lidar_Obstacle_detection/src/sensors/data/pcd/data_1/";
+
     ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd(
-            "/home/dusty/Work/DustyCodes/SFND_Lidar_Obstacle_detection/src/sensors/data/pcd/data_1/0000000000.pcd");
-    renderPointCloud(viewer,inputCloud,"inputCloud");
+    pcl::PointCloud<pcl::PointXYZI>::Ptr pointCloud = pointProcessorI->loadPcd(baseDir + "0000000000.pcd");
+    auto filterCloud = pointProcessorI->FilterCloud(pointCloud, 0.25,
+            Eigen::Vector4f(-10, -5, -3, 1),
+            Eigen::Vector4f(30, 8, 1, 1));
+    renderPointCloud(viewer, filterCloud, "filterCloud");
+
+    auto segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 100, 0.2);
+
+//    renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
+    renderPointCloud(viewer,segmentCloud.second,"planeCloud",Color(0,1,0));
+
+    // Cluster
+    auto cloudClusters = pointProcessorI->Clustering(segmentCloud.first, 0.5, 10, 500);
+
+    int clusterId = 0;
+    std::vector<Color> colors = {Color(1,0,0), Color(0,1,1), Color(0,0,1)};
+
+    for(auto cluster : cloudClusters)
+    {
+        std::cout << "cluster size ";
+        pointProcessorI->numPoints(cluster);
+        renderPointCloud(viewer,cluster,"obstCloud"+std::to_string(clusterId),colors[clusterId % colors.size()]);
+
+        // Bounding Box
+        Box box = pointProcessorI->BoundingBox(cluster);
+//        BoxQ boxQ = pointProcessor->BoundingBoxQ(cluster);
+        renderBox(viewer, box, clusterId);
+
+        ++clusterId;
+    }
 }
 
 
