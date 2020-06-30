@@ -84,7 +84,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
         const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud)
 {
     auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.25,
-            Eigen::Vector4f(-10, -7, -3, 1),
+            Eigen::Vector4f(-10, -5, -3, 1),
             Eigen::Vector4f(30, 7, 1, 1));
     renderPointCloud(viewer, filterCloud, "filterCloud");
 
@@ -153,7 +153,7 @@ int main (int argc, char** argv)
 
     cityBlock(viewer, pointProcessorI, inputCloudI);
 
-    while (!viewer->wasStopped ())
+    while (!viewer->wasStopped())
     {
         // Clear viewer
         viewer->removeAllPointClouds();
