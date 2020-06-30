@@ -84,8 +84,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
         const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud)
 {
     auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.25,
-            Eigen::Vector4f(-10, -5, -3, 1),
-            Eigen::Vector4f(30, 8, 1, 1));
+            Eigen::Vector4f(-10, -7, -3, 1),
+            Eigen::Vector4f(30, 7, 1, 1));
     renderPointCloud(viewer, filterCloud, "filterCloud");
 
     auto segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 100, 0.2);
@@ -136,7 +136,6 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
         viewer->addCoordinateSystem (1.0);
 }
 
-
 int main (int argc, char** argv)
 {
     std::cout << "starting enviroment" << std::endl;
@@ -146,7 +145,7 @@ int main (int argc, char** argv)
     initCamera(setAngle, viewer);
 //    simpleHighway(viewer);
 
-    std::string baseDir = "/home/dusty/Work/DustyCodes/SFND_Lidar_Obstacle_detection/src/sensors/data/pcd/data_1/";
+    std::string baseDir = "../src/sensors/data/pcd/data_1/";
     auto pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
     std::vector<boost::filesystem::path> stream = pointProcessorI->streamPcd(baseDir);
     auto streamIterator = stream.begin();

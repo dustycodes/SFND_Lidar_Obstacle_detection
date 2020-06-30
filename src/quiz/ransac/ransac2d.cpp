@@ -47,7 +47,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData()
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData3D()
 {
 	ProcessPointClouds<pcl::PointXYZ> pointProcessor;
-	return pointProcessor.loadPcd("/home/dusty/Work/DustyCodes/SFND_Lidar_Obstacle_Detection/src/sensors/data/pcd/simpleHighway.pcd");
+    return pointProcessor.loadPcd("../../../../src/sensors/data/pcd/simpleHighway.pcd");
 }
 
 
