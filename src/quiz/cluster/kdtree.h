@@ -33,7 +33,7 @@ struct KdTree
             return;
         }
 
-        uint side = currentDepth % 2;
+        uint side = currentDepth % point.size();
 	    if (point[side] < (*currentNode)->point[side])
         {
 	        insertRec(point, id, currentDepth + 1, &(*currentNode)->left);
@@ -72,11 +72,11 @@ struct KdTree
         }
 
         // Continue search
-        if (target[currentDepth % 2] - distanceTol < node->point[currentDepth % 2])
+        if (target[currentDepth % node->point.size()] - distanceTol < node->point[currentDepth % node->point.size()])
         {
             searchRec(ids, node->left, currentDepth + 1, target, distanceTol);
         }
-        if (target[currentDepth % 2] + distanceTol > node->point[currentDepth % 2])
+        if (target[currentDepth % node->point.size()] + distanceTol > node->point[currentDepth % node->point.size()])
         {
             searchRec(ids, node->right, currentDepth + 1, target, distanceTol);
         }
