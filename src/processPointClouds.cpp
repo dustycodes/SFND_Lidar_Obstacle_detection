@@ -94,27 +94,58 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::SegmentPlane(
+        typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold)
 {
+    bool useCustomImpl = true;
+
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
-	pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-    pcl::SACSegmentation<PointT> seg;
-    seg.setModelType (pcl::SACMODEL_PLANE);
-    seg.setMethodType (pcl::SAC_RANSAC);
-    seg.setMaxIterations (maxIterations);
-    seg.setDistanceThreshold (distanceThreshold);
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult;
 
-    seg.setInputCloud(cloud);
-    seg.segment(*inliers, *coefficients);
-
-    if (inliers->indices.size() <= 0)
+    if (useCustomImpl)
     {
-        std::cout << "Could not estimate" << std::endl;
-    }
+        auto inliers = RansacPlane(cloud, maxIterations, distanceThreshold);
 
-    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliers, cloud);
+        if (inliers.size() <= 0)
+        {
+            std::cout << "Could not estimate" << std::endl;
+        }
+
+        typename pcl::PointCloud<PointT>::Ptr cloudInliers(new pcl::PointCloud<PointT>());
+        typename pcl::PointCloud<PointT>::Ptr cloudOutliers(new pcl::PointCloud<PointT>());
+
+        for (int index = 0; index < cloud->points.size(); index++)
+        {
+            PointT point = cloud->points[index];
+            if (inliers.count(index))
+                cloudInliers->points.push_back(point);
+            else
+                cloudOutliers->points.push_back(point);
+        }
+        segResult.first = cloudOutliers;
+        segResult.second = cloudInliers;
+    }
+    else
+    {
+	    pcl::PointIndices::Ptr inliers2(new pcl::PointIndices);
+
+        pcl::SACSegmentation<PointT> seg;
+        seg.setModelType(pcl::SACMODEL_PLANE);
+        seg.setMethodType(pcl::SAC_RANSAC);
+        seg.setMaxIterations(maxIterations);
+        seg.setDistanceThreshold(distanceThreshold);
+        seg.setInputCloud(cloud);
+        seg.segment(*inliers2, *coefficients);
+
+        if (inliers2->indices.size() <= 0)
+        {
+            std::cout << "Could not estimate" << std::endl;
+        }
+
+        segResult = SeparateClouds(inliers2, cloud);
+    }
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
@@ -125,7 +156,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 
 template<typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(
+        typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
 
     // Time clustering process
@@ -243,4 +275,69 @@ std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(std::
 
     return paths;
 
+}
+
+template<typename PointT>
+std::unordered_set<int> ProcessPointClouds<PointT>::RansacPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol)
+{
+    std::unordered_set<int> inliersResult;
+    srand(time(NULL));
+
+    if (cloud->points.size() <= 0)
+    {
+        std::cerr << "There was no points in the cloud" << std::endl;
+        return inliersResult;
+    }
+
+    // For max iterations
+    for (int i = 0; i < maxIterations; ++i)
+    {
+        // Randomly sample subset and fit line
+        std::cout << "Cloud points " << cloud->points.size() << std::endl;
+        int point1Index = std::rand() % cloud->points.size();
+        int point2Index = std::rand() % cloud->points.size();
+        int point3Index = std::rand() % cloud->points.size();
+        auto point1 = cloud->points[point1Index];
+        auto point2 = cloud->points[point2Index];
+        auto point3 = cloud->points[point3Index];
+
+        // find normal vector by taking cross product
+        // (y1-y2)x+(x2-x1)y+(x1∗y2-x2∗y1
+        // Ax+By+C=0
+        auto a = (point2.y - point1.y) * (point3.z - point1.z) - (point2.z - point1.z) * (point3.y - point1.y);
+        auto b = (point2.z - point1.z) * (point3.x - point1.x) - (point2.x - point1.x) * (point3.z - point1.z);
+        auto c = (point2.x - point1.x) * (point3.y - point1.y) - (point2.y - point1.y) * (point3.x - point1.x);
+        auto d = -1 * (a * point1.x + b * point1.y + c * point1.z);
+        // D=−(ix1+jy1+kz1)
+
+        std::unordered_set<int> inliers;
+        inliers.insert(point1Index);
+        inliers.insert(point2Index);
+
+        for (int index = 0; index < cloud->points.size(); ++index)
+        {
+            if (index == point1Index || index == point2Index)
+            {
+                continue;
+            }
+
+            // Measure distance between every point and fitted line
+            // Ax+By+Cz+D=0
+            // d=∣A∗x+B∗y+C∗z+D∣/sqrt(A^2+B^2+C^2).
+            auto p = cloud->points[index];
+            auto distance = std::fabs(a * p.x + b * p.y + c * p.z + d) / sqrt(a * a + b * b + c * c);
+
+            // If distance is smaller than threshold count it as inlier
+            if (distance <= distanceTol)
+            {
+                inliers.insert(index);
+            }
+        }
+
+        if (inliers.size() > inliersResult.size())
+            inliersResult = inliers;
+    }
+    // Return indicies of inliers from fitted line with most inliers
+
+    return inliersResult;
 }
